@@ -52,7 +52,7 @@ namespace WebAdvert.Web.Controllers
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex.InnerException;
             }
@@ -93,6 +93,41 @@ namespace WebAdvert.Web.Controllers
                 }
             }
             return View(model);
+        }
+
+        public async Task<IActionResult> Login(LoginModel model)
+        {
+            return View(model);
+
+        }
+
+        [HttpPost]
+        [ActionName("Login")]
+        public async Task<IActionResult> LoginPost(LoginModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email).ConfigureAwait(false);
+
+                if (user != null)
+                {
+                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false).ConfigureAwait(false);
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("LoginError", "Email and Password do not match");
+                    }
+
+                }
+                else
+                {
+                    ModelState.AddModelError("LoginError", "Invalid Email");
+                }
+            }
+            return View("Login", model);
         }
     }
 }
