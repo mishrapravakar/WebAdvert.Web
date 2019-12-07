@@ -48,7 +48,7 @@ namespace WebAdvert.Web.Controllers
                     var createdUser = await _userManager.CreateAsync(user, model.Password);
                     if (createdUser.Succeeded)
                     {
-                        RedirectToAction("Confirm");
+                        return RedirectToAction("Confirm");
                     }
                 }
             }
@@ -77,7 +77,8 @@ namespace WebAdvert.Web.Controllers
                     return View(model);
                 }
 
-                var result = await _userManager.ConfirmEmailAsync(user, model.Code);
+                //var result = await _userManager.ConfirmEmailAsync(user, model.Code);
+                var result = await (_userManager as CognitoUserManager<CognitoUser>).ConfirmSignUpAsync(user, model.Code, true).ConfigureAwait(false);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
