@@ -48,11 +48,11 @@ namespace WebAdvert.Web.Controllers
                     var createdUser = await _userManager.CreateAsync(user, model.Password);
                     if (createdUser.Succeeded)
                     {
-                        RedirectToAction("Confirm");
+                        return RedirectToAction("Confirm");
                     }
                 }
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 throw ex.InnerException;
             }
@@ -77,7 +77,8 @@ namespace WebAdvert.Web.Controllers
                     return View(model);
                 }
 
-                var result = await _userManager.ConfirmEmailAsync(user, model.Code);
+                //var result = await _userManager.ConfirmEmailAsync(user, model.Code);
+                var result = await (_userManager as CognitoUserManager<CognitoUser>).ConfirmSignUpAsync(user, model.Code, true).ConfigureAwait(false);
                 if (result.Succeeded)
                 {
                     return RedirectToAction("Index", "Home");
@@ -92,6 +93,41 @@ namespace WebAdvert.Web.Controllers
                 }
             }
             return View(model);
+        }
+
+        public async Task<IActionResult> Login(LoginModel model)
+        {
+            return View(model);
+
+        }
+
+        [HttpPost]
+        [ActionName("Login")]
+        public async Task<IActionResult> LoginPost(LoginModel model)
+        {
+            if (ModelState.IsValid)
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email).ConfigureAwait(false);
+
+                if (user != null)
+                {
+                    var result = await _signInManager.PasswordSignInAsync(user, model.Password, model.RememberMe, false).ConfigureAwait(false);
+                    if (result.Succeeded)
+                    {
+                        return RedirectToAction("Index", "Home");
+                    }
+                    else
+                    {
+                        ModelState.AddModelError("LoginError", "Email and Password do not match");
+                    }
+
+                }
+                else
+                {
+                    ModelState.AddModelError("LoginError", "Invalid Email");
+                }
+            }
+            return View("Login", model);
         }
     }
 }
